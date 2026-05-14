@@ -1,41 +1,38 @@
-# / / ОБРАБОТЧИК СОБЫТИЙ / /
-# Этот файл отвечает за то, ЧТО бот будет делать при нажатии на кнопки.
+# / / ГЛАВНЫЙ ЗАПУСКНОЙ ФАЙЛ / /
 
-from aiogram import Router, F, types
-from aiogram.filters import Command
-import datetime  # Библиотека для работы со временем
-import kb        # Импортируем наш файл с кнопками
+import asyncio
+import logging
+from aiogram import Bot, Dispatcher
+import config    # Импортируем наш секретный конфиг с токеном
+import handlers  # Импортируем нашу логику и обработчики сообщений
 
-# Роутер — это как распределитель задач. 
-# Он понимает, какое сообщение к какому обработчику отправить.
-router = Router()
+# 1. Логирование — это "черный ящик" самолета. 
+# Если бот упадет, здесь будет написано почему.
+logging.basicConfig(level=logging.INFO)
 
-# 1. Ответ на команду /start
-@router.message(Command("start"))
-async def start_handler(message: types.Message):
-    # Мы отправляем текст и прикрепляем нашу клавиатуру из kb.py
-    await message.answer(
-        f"Привет, {message.from_user.first_name}! Я готов к работе.",
-        reply_markup=kb.main_menu()
-    )
+# 2. Инициализация бота и диспетчера
+# Мы берем токен прямо из нашего файла config.py
+bot = Bot(token=config.TOKEN)
+dp = Dispatcher()
 
-# 2. Обработка кнопки "Сколько время? ⏰"
-@router.message(F.text == "Сколько время? ⏰")
-async def time_handler(message: types.Message):
-    # Получаем текущее время
-    now = datetime.datetime.now().strftime("%H:%M:%S")
-    await message.answer(f"Сейчас на часах: {now} 🕒")
+# 3. Подключаем наши обработчики (те самые кнопки и команды)
+# Мы говорим диспетчеру: "Слушай то, что написано в handlers.py"
+dp.include_router(handlers.router)
 
-# 3. Обработка кнопки "Как тебя зовут? 🤔"
-@router.message(F.text == "Как тебя зовут? 🤔")
-async def name_handler(message: types.Message):
-    await message.answer("Меня зовут Обучающий Бот! Я проект студии SERIES(CG).")
+# 4. Функция запуска
+async def main():
+    print("--- БОТ ЗАПУЩЕН И ГОТОВ К РАБОТЕ ---")
+    print("Напиши /start в своем Telegram-боте!")
+    
+    # Удаляем все сообщения, которые пришли боту, пока он был выключен
+    await bot.delete_webhook(drop_pending_updates=True)
+    
+    # Начинаем опрос серверов Telegram (Polling)
+    await dp.start_polling(bot)
 
-# 4. Обработка любого другого текста (Разговорный режим)
-@router.message()
-async def message_handler(message: types.Message):
-    await message.answer("Я тебя услышал! Попробуй нажать на кнопки в меню.")
-
-# ПОДСКАЗКА ДЛЯ НОВИЧКА:
-# Если ты изменил текст кнопки в kb.py, не забудь изменить его и здесь
-# в строчке F.text == "Твой новый текст", иначе бот не поймет нажатие!
+# Точка входа в программу
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Бот выключен пользователем.")
