@@ -1,0 +1,31 @@
+name: Bot CI/CD Tutorial
+
+# / / ПРЕДОХРАНИТЕЛЬ / /
+# Этот экшен не запустится, пока ты не удалишь строку ниже!
+# Мы добавили "if: false", чтобы ты сначала изучил код.
+
+on: [push]
+
+jobs:
+  build:
+    # ПОДСКАЗКА: Чтобы этот скрипт заработал, удали строчку "if: false"
+    if: false 
+    
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Check Code
+      run: |
+        echo "Поздравляю! Твой код прошел проверку в облаке GitHub!"
